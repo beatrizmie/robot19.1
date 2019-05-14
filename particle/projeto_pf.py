@@ -21,7 +21,7 @@ robot = Particle(largura/2, altura/2, math.pi/4, 1.0)
 # Nuvem de particulas
 particulas = []
 
-num_particulas = 200
+num_particulas = 111
 
 
 # Os angulos em que o robo simulado vai ter sensores
@@ -66,6 +66,8 @@ def cria_particulas(minx=0, miny=0, maxx=largura, maxy=altura, n_particulas=num_
 		Cria uma lista de partículas distribuídas de forma uniforme entre minx, miny, maxx e maxy
 	"""
 
+	particulas = []
+
 	for i in range(num_particulas):
 		x = np.random.uniform(minx, maxx)
 		y = np.random.uniform(miny, maxy)
@@ -88,10 +90,10 @@ def move_particulas(particulas, movimento):
 	"""
 
 	for p in particulas:
-		while movimento[0]!=0:
-			deslocamento = np.random.normal(movimento[0], 3)
-			theta = np.random.normal(movimento[1], 2*math.pi/180)
-			p.move_relative(movimento)
+		#if movimento[0]!=0:
+		deslocamento = np.random.normal(movimento[0], 3)
+		theta = np.random.normal(movimento[1], 2*math.pi/180)
+		p.move_relative([deslocamento, theta])
 
 	return particulas
 
@@ -117,14 +119,16 @@ def leituras_laser_evidencias(robot, particulas):
 
 		leitura_p = inspercles.nb_lidar(p, angles).items()
 		for a, b in leitura_p:
-			x = norm.pdf(b, leitura_robo[a], 8)
+			x = norm.pdf(leitura_robo[a], loc = b, scale = 8)
 			soma_p += x
 		total += soma_p
+		p.w = soma_p
 
-		alpha = 1/total
-		part_w = soma_p
-		part_w *= alpha
-		
+	alpha = 1/total
+
+	for p in particulas:
+		p.w *= alpha
+	
 
 	# Voce vai precisar calcular a leitura para cada particula usando inspercles.nb_lidar e depois atualizar as probabilidades
 
@@ -147,9 +151,9 @@ def reamostrar(particulas, n_particulas = num_particulas):
     novas_p = draw_random_sample(particulas, pesos_p, num_particulas)
 
     for p in novas_p:
-    	p.x = norm.rvs(0, 3)
-    	p.y = norm.rvs(0, 3)
-    	p.theta = norm.rvs(0, math.radians(2))
+    	p.x = norm.rvs(p.x, 3)
+    	p.y = norm.rvs(p.y, 3)
+    	p.theta = norm.rvs(p.theta, math.radians(2))
     	p.w = 1
 
     return novas_p
